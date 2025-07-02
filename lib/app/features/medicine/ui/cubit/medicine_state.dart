@@ -2,13 +2,8 @@ part of 'medicine_cubit.dart';
 
 /// Represents the type of packaging for a medicine.
 enum PackagingType {
-  /// Piece packaging type.
-  pcs('Pcs'),
-
-  /// Packs packaging type.
+  piece('Piece'),
   packs('Packs'),
-
-  /// Box packaging type.
   box('Box');
 
   /// The human-readable name of the packaging type.
@@ -20,7 +15,7 @@ enum PackagingType {
   factory PackagingType.fromString(String value) {
     return PackagingType.values.firstWhere(
       (e) => e.name.toLowerCase() == value.toLowerCase(),
-      orElse: () => PackagingType.pcs,
+      orElse: () => PackagingType.piece,
     );
   }
 

@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
-import '/app/core/services/sync/service/sync_watcher_service.dart';
+import '/app/core/services/sync/service/sync_manager_service.dart';
 import '/app/core/utils/shared_file_util.dart';
 import '/app/core/utils/image_picker_utils.dart';
 import '/app/features/medicine/data/model/medicine_model.dart';
@@ -14,7 +14,9 @@ import '/app/features/medicine/data/repository/medicine_repository.dart';
 import '/app/core/services/database/app_db.dart';
 
 import '../../service/medicine_service.dart';
+
 part 'medicine_state.dart';
+
 part 'medicine_cubit.freezed.dart';
 
 /// Manages medicine-related business logic and state for the application.
@@ -27,7 +29,9 @@ class MedicineCubit extends Cubit<MedicineState> {
   final MedicineRepository _repo;
   final MedicineService _service;
   final ImagePickerUtils _imagePicker;
-  final SyncWatcherService _watcher;
+  final SyncManagerService _syncManager;
+
+  List<MedicineModel> _templateMedicines = [];
 
   /// Constructs a [MedicineCubit] with required dependencies.
   ///
@@ -35,7 +39,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// - [_service]: Service providing utility functions like dummy data generation.
   /// - [_imagePicker]: Utility to pick images from device gallery.
   /// - [_watcher]: Watches database changes and triggers updates.
-  MedicineCubit(this._repo, this._service, this._imagePicker, this._watcher)
+  MedicineCubit(this._repo, this._service, this._imagePicker, this._syncManager)
     : super(MedicineState());
 
   /// Initializes medicine data on app start.
@@ -48,14 +52,14 @@ class MedicineCubit extends Cubit<MedicineState> {
     emit(state.copyWith(isLoading: true));
     try {
       await _repo.sync();
-      final existing = await _repo.getAll();
+      _templateMedicines = await _repo.getAll();
 
-      if (existing.isEmpty) {
+      if (_templateMedicines.isEmpty) {
         final dummyData = _service.generateDummyData();
 
         // Save asset images to local storage
         // and update the image paths in the dummy data
-        final updatedDummyData = await Future.wait(
+        _templateMedicines = await Future.wait(
           dummyData.map((m) async {
             String? imagePath;
             if (m.imagePath != null) {
@@ -63,17 +67,17 @@ class MedicineCubit extends Cubit<MedicineState> {
                 m.imagePath!,
               ); // await here
             }
-            return m.copyWith(imagePath: imagePath);
+            return m.copyWith(imagePath: imagePath, updatedAt: DateTime.now());
           }),
         );
 
-        emit(state.copyWith(medicines: updatedDummyData, isLoading: false));
-        await _repo.saveAll(updatedDummyData);
+        emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
+        await _repo.saveAll(_templateMedicines);
       } else {
-        emit(state.copyWith(medicines: existing, isLoading: false));
+        emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
       }
-      _watcher.init(onChange: _onFileChanged);
-      _watcher.startWatching(DbTable.medicine(isDefault: true).name);
+      _syncManager.init(onChange: _onFileChanged);
+      _syncManager.startWatching(DbTable.medicines);
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
@@ -82,10 +86,18 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Callback triggered when watched database table changes.
   ///
   /// Updates medicine list in the state to reflect latest database content.
-  Future<void> _onFileChanged(String table) async {
-    if (table == DbTable.medicine(isDefault: true).name) {
-      final data = await _repo.getAll();
-      emit(state.copyWith(medicines: data));
+  /// Callback triggered when watched database table changes.
+  ///
+  /// Currently handles synchronization for medicine data when the medicines table is modified.
+  /// This ensures that any external changes to the database are reflected in the repository.
+  ///
+  /// Parameters:
+  ///   [table] - The database table that has been changed.
+  Future<void> _onFileChanged(DbTable table) async {
+    if (table == DbTable.medicines) {
+      await _repo.sync();
+      _templateMedicines = await _repo.getAll();
+      emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
     }
   }
 
@@ -96,8 +108,8 @@ class MedicineCubit extends Cubit<MedicineState> {
     emit(state.copyWith(isLoading: true));
     try {
       await Future.delayed(const Duration(seconds: 2)); // Simulate delay
-      final data = await _repo.getAll();
-      emit(state.copyWith(medicines: data, isLoading: false));
+      _templateMedicines = await _repo.getAll();
+      emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
@@ -105,13 +117,13 @@ class MedicineCubit extends Cubit<MedicineState> {
 
   /// Updates a specific medicine entry in both state and persistence.
   ///
-  /// Automatically sets [lastUpdated] timestamp upon successful update.
+  /// Automatically sets [updatedAt] timestamp upon successful update.
   Future<void> updateMedicine(MedicineModel updated) async {
     try {
       final updatedList = state.medicines
           .map(
             (m) => m.id == updated.id
-                ? updated.copyWith(lastUpdated: DateTime.now())
+                ? updated.copyWith(updatedAt: DateTime.now())
                 : m,
           )
           .toList();
@@ -125,13 +137,38 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Persists all current medicines to repository.
   ///
   /// Useful for bulk saving after multiple local edits.
-  Future<void> saveAll() async => _repo.saveAll(state.medicines);
+  Future<void> saveAll() async {
+    emit(state.copyWith(isLoading: false, errorMessage: null));
+    try {
+      final List<MedicineModel> updatedMedicines = [];
+
+      for (var medicine in state.medicines) {
+        final tempMedicine = _templateMedicines
+            .where((temp) => temp.id == medicine.id)
+            .cast<MedicineModel?>()
+            .firstOrNull;
+
+        if (tempMedicine == null || medicine != tempMedicine) {
+          updatedMedicines.add(medicine.copyWith(updatedAt: DateTime.now()));
+        } else {
+          updatedMedicines.add(medicine);
+        }
+      }
+
+      await _repo.saveAll(updatedMedicines);
+      _templateMedicines = updatedMedicines;
+    } catch (e) {
+      emit(state.copyWith(errorMessage: e.toString()));
+    } finally {
+      emit(state.copyWith(isLoading: false));
+    }
+  }
 
   /// Increases quantity of selected medicine by one.
   void incrementQuantity(String mId) {
     final updatedList = state.medicines.map((m) {
       if (m.id == mId) {
-        return m.copyWith(quentity: m.quentity + 1);
+        return m.copyWith(quantity: m.quantity + 1);
       }
       return m;
     }).toList();
@@ -142,8 +179,8 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Decreases quantity of selected medicine by one (minimum 1).
   void decrementQuantity(String mId) {
     final updatedList = state.medicines.map((m) {
-      if (m.id == mId && m.quentity > 1) {
-        return m.copyWith(quentity: m.quentity - 1);
+      if (m.id == mId && m.quantity > 1) {
+        return m.copyWith(quantity: m.quantity - 1);
       }
       return m;
     }).toList();
@@ -250,7 +287,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Stops watching database before closing the cubit.
   @override
   Future<void> close() {
-    _watcher.stopWatching(DbTable.medicine(isDefault: true).name);
+    _syncManager.startWatching(DbTable.medicines);
     return super.close();
   }
 }

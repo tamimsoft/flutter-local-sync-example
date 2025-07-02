@@ -14,9 +14,10 @@ class SyncBanner extends StatelessWidget {
 
   Widget _buildUi(BuildContext context) {
     return BlocBuilder<SyncStatusCubit, SyncStatusState>(
+      buildWhen: (previous, current) => previous.status != current.status,
       builder: (context, state) {
         if (state.status == SyncStatus.syncing) {
-          return _buildBanner(Colors.orange.shade700, '🔁 Sync in progress...');
+          return _buildBanner(Colors.orange.shade700, '🔁 Syncing...');
         }
         if (state.status == SyncStatus.synced) {
           return _buildBanner(Colors.green.shade600, '🟢 Synced');

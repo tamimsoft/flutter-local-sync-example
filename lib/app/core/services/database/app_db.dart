@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import '/app/core/constants/app_strings.dart';
 
 part 'db_tables.dart';
 /// Represents various operators that can be used to filter database queries.

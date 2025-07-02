@@ -8,11 +8,9 @@ import '../cubit/medicine_cubit.dart';
 /// A widget that displays and manages the subtotal, MRP (Maximum Retail Price), and PP (Purchase Price)
 /// for a specific medicine item. It allows users to edit MRP and PP values and dynamically updates
 /// the subtotal based on quantity and PP.
-
 class SubTotalMrpAndPp extends StatelessWidget {
   const SubTotalMrpAndPp({super.key, required this.m});
 
-  /// The medicine model associated with this widget.
   final MedicineModel m;
 
   @override
@@ -22,17 +20,16 @@ class SubTotalMrpAndPp extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
-        /// Watches changes in medicine quantity or PP to update the subtotal.
         BlocBuilder<MedicineCubit, MedicineState>(
           buildWhen: (prev, curr) {
             final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
             final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
-            return oldItem.quentity != newItem.quentity ||
-                oldItem.pp != newItem.pp;
+            return oldItem.pp != newItem.pp ||
+                oldItem.quantity != newItem.quantity;
           },
           builder: (context, state) {
             final updated = state.medicines.firstWhere((e) => e.id == m.id);
-            final double subTotal = updated.quentity * updated.pp;
+            final subTotal = updated.quantity * updated.pp;
             return Text(
               'Sub Total: ৳ ${subTotal.toStringAsFixed(2)}',
               style: TextStyle(
@@ -44,25 +41,43 @@ class SubTotalMrpAndPp extends StatelessWidget {
           },
         ),
         const SizedBox(height: 8),
-
-        /// Fields to edit MRP and PP values for the medicine item.
         Row(
           children: <Widget>[
-            _buildTextField(
-              labelText: 'MRP ৳',
-              initialValue: m.mrp.toStringAsFixed(2),
-              onChanged: (value) {
-                final parsed = double.tryParse(value);
-                cubit.setMrp(m.id, parsed ?? 0.0);
+            BlocBuilder<MedicineCubit, MedicineState>(
+              buildWhen: (prev, curr) {
+                final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
+                final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
+                return oldItem.mrp != newItem.mrp;
+              },
+              builder: (context, state) {
+                final updated = state.medicines.firstWhere((e) => e.id == m.id);
+                return _buildTextField(
+                  labelText: 'MRP ৳',
+                  value: updated.mrp.toStringAsFixed(2),
+                  onChanged: (value) {
+                    final parsed = double.tryParse(value);
+                    cubit.setMrp(updated.id, parsed ?? 0.0);
+                  },
+                );
               },
             ),
             const SizedBox(width: 20),
-            _buildTextField(
-              labelText: 'PP ৳',
-              initialValue: m.pp.toStringAsFixed(2),
-              onChanged: (value) {
-                final parsed = double.tryParse(value);
-                cubit.setPp(m.id, parsed ?? 0.0);
+            BlocBuilder<MedicineCubit, MedicineState>(
+              buildWhen: (prev, curr) {
+                final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
+                final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
+                return oldItem.pp != newItem.pp;
+              },
+              builder: (context, state) {
+                final updated = state.medicines.firstWhere((e) => e.id == m.id);
+                return _buildTextField(
+                  labelText: 'PP ৳',
+                  value: updated.pp.toStringAsFixed(2),
+                  onChanged: (value) {
+                    final parsed = double.tryParse(value);
+                    cubit.setPp(updated.id, parsed ?? 0.0);
+                  },
+                );
               },
             ),
           ],
@@ -71,16 +86,15 @@ class SubTotalMrpAndPp extends StatelessWidget {
     );
   }
 
-  /// Builds a text field for editing numerical values like MRP or PP.
   Widget _buildTextField({
     required String labelText,
-    required String initialValue,
+    required String value,
     required ValueChanged<String> onChanged,
   }) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
+        children: [
           Text(
             labelText,
             style: TextStyle(fontSize: 14, color: Colors.grey[700]),
@@ -88,11 +102,12 @@ class SubTotalMrpAndPp extends StatelessWidget {
           SizedBox(
             width: 80,
             child: TextFormField(
-              initialValue: initialValue,
+              controller: TextEditingController(text: value),
+              // initialValue: initialValue,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              inputFormatters: <TextInputFormatter>[
+              inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
               ],
               textAlign: TextAlign.end,

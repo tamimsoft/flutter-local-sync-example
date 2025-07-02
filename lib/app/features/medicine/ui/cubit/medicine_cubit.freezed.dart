@@ -16,11 +16,20 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$MedicineState {
+  /// List of available medicines.
   List<MedicineModel> get medicines => throw _privateConstructorUsedError;
+
+  /// Current selected quantity of medicine.
   int get quantity => throw _privateConstructorUsedError;
+
+  /// Available packaging options.
   List<PackagingType> get availablePackaging =>
       throw _privateConstructorUsedError;
+
+  /// Indicates if data is currently being loaded.
   bool get isLoading => throw _privateConstructorUsedError;
+
+  /// Optional error message in case of failure.
   String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of MedicineState
@@ -162,7 +171,10 @@ class _$MedicineStateImpl implements _MedicineState {
       : _medicines = medicines,
         _availablePackaging = availablePackaging;
 
+  /// List of available medicines.
   final List<MedicineModel> _medicines;
+
+  /// List of available medicines.
   @override
   @JsonKey()
   List<MedicineModel> get medicines {
@@ -171,10 +183,15 @@ class _$MedicineStateImpl implements _MedicineState {
     return EqualUnmodifiableListView(_medicines);
   }
 
+  /// Current selected quantity of medicine.
   @override
   @JsonKey()
   final int quantity;
+
+  /// Available packaging options.
   final List<PackagingType> _availablePackaging;
+
+  /// Available packaging options.
   @override
   @JsonKey()
   List<PackagingType> get availablePackaging {
@@ -184,9 +201,12 @@ class _$MedicineStateImpl implements _MedicineState {
     return EqualUnmodifiableListView(_availablePackaging);
   }
 
+  /// Indicates if data is currently being loaded.
   @override
   @JsonKey()
   final bool isLoading;
+
+  /// Optional error message in case of failure.
   @override
   final String? errorMessage;
 
@@ -238,14 +258,23 @@ abstract class _MedicineState implements MedicineState {
       final bool isLoading,
       final String? errorMessage}) = _$MedicineStateImpl;
 
+  /// List of available medicines.
   @override
   List<MedicineModel> get medicines;
+
+  /// Current selected quantity of medicine.
   @override
   int get quantity;
+
+  /// Available packaging options.
   @override
   List<PackagingType> get availablePackaging;
+
+  /// Indicates if data is currently being loaded.
   @override
   bool get isLoading;
+
+  /// Optional error message in case of failure.
   @override
   String? get errorMessage;
 

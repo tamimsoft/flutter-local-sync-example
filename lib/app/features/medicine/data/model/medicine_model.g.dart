@@ -19,12 +19,12 @@ class MedicineModelAdapter extends TypeAdapter<MedicineModel> {
     return MedicineModel(
       id: fields[0] as String,
       name: fields[1] as String,
-      quentity: fields[2] as int,
+      quantity: fields[2] as int,
       packaging: fields[3] as String,
       mrp: fields[4] as double,
       pp: fields[5] as double,
       imagePath: fields[6] as String?,
-      lastUpdated: fields[7] as DateTime,
+      updatedAt: fields[7] as DateTime,
     );
   }
 
@@ -37,7 +37,7 @@ class MedicineModelAdapter extends TypeAdapter<MedicineModel> {
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.quentity)
+      ..write(obj.quantity)
       ..writeByte(3)
       ..write(obj.packaging)
       ..writeByte(4)
@@ -47,7 +47,7 @@ class MedicineModelAdapter extends TypeAdapter<MedicineModel> {
       ..writeByte(6)
       ..write(obj.imagePath)
       ..writeByte(7)
-      ..write(obj.lastUpdated);
+      ..write(obj.updatedAt);
   }
 
   @override
@@ -69,22 +69,22 @@ _$MedicineModelImpl _$$MedicineModelImplFromJson(Map<String, dynamic> json) =>
     _$MedicineModelImpl(
       id: json['id'] as String,
       name: json['name'] as String,
-      quentity: (json['quentity'] as num).toInt(),
+      quantity: (json['quantity'] as num).toInt(),
       packaging: json['packaging'] as String,
       mrp: (json['mrp'] as num).toDouble(),
       pp: (json['pp'] as num).toDouble(),
       imagePath: json['imagePath'] as String?,
-      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$$MedicineModelImplToJson(_$MedicineModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'quentity': instance.quentity,
+      'quantity': instance.quantity,
       'packaging': instance.packaging,
       'mrp': instance.mrp,
       'pp': instance.pp,
       'imagePath': instance.imagePath,
-      'lastUpdated': instance.lastUpdated.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
     };

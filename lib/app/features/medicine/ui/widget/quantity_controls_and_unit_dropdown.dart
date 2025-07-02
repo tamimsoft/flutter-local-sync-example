@@ -44,7 +44,7 @@ class QuantityControlsAndUnitDropdown extends StatelessWidget {
                   final newItem = curr.medicines.firstWhere(
                     (e) => e.id == m.id,
                   );
-                  return oldItem.quentity != newItem.quentity;
+                  return oldItem.quantity != newItem.quantity;
                 },
                 builder: (context, state) {
                   final updated = state.medicines.firstWhere(
@@ -53,7 +53,7 @@ class QuantityControlsAndUnitDropdown extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Text(
-                      updated.quentity.toString().padLeft(2, '0'),
+                      updated.quantity.toString().padLeft(2, '0'),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,

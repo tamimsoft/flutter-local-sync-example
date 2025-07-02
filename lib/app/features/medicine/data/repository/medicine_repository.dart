@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
-import 'package:instance_a/app/config/injectable/injection.dart';
-import '../../../../core/services/sync/repository/generic_sync_repository.dart';
+import '/app/config/injectable/injection.dart';
+import '/app/core/services/sync/repository/generic_sync_repository.dart';
 import '../../adapter/medicine_sync_adapter.dart';
 import '/app/features/medicine/data/model/medicine_model.dart';
 
@@ -8,6 +8,7 @@ import '/app/features/medicine/data/model/medicine_model.dart';
 ///
 /// This class utilizes [GenericSyncRepository] to handle data operations while interfacing with
 /// [MedicineSyncAdapter] to adapt medicine-specific logic during synchronization processes.
+///
 @lazySingleton
 class MedicineRepository {
   final GenericSyncRepository<MedicineModel> _genericRepo =

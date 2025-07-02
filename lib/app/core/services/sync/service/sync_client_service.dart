@@ -46,6 +46,19 @@ class SyncClientService {
     });
   }
 
+  Future<Map<String, dynamic>> pullOne({
+    required String table,
+    required String id,
+  }) async {
+    final response = await _executeWithRetry('PULL_ONE', table, {
+      'type': 'PULL_ONE',
+      'table': table,
+      'id': id,
+    });
+
+    return response['data'] as Map<String, dynamic>;
+  }
+
   /// Pulls data from the specified table on the server.
   ///
   /// [table] is the name of the source table.
@@ -138,9 +151,18 @@ class SyncClientService {
         },
         onDone: () {
           if (!completer.isCompleted) {
+            final rawResponse = buffer.toString().trim();
+            debugPrint('📥 Raw socket response: $rawResponse');
+
+            if (rawResponse.isEmpty) {
+              completer.completeError(
+                SyncServiceException('Empty response from server.'),
+              );
+              return;
+            }
+
             try {
-              final response =
-                  jsonDecode(buffer.toString()) as Map<String, dynamic>;
+              final response = jsonDecode(rawResponse) as Map<String, dynamic>;
               if (response.containsKey('error')) {
                 completer.completeError(
                   SyncServiceException(response['error'] as String),
@@ -157,6 +179,28 @@ class SyncClientService {
             }
           }
         },
+
+        // onDone: () {
+        //   if (!completer.isCompleted) {
+        //     try {
+        //       final response =
+        //           jsonDecode(buffer.toString()) as Map<String, dynamic>;
+        //       if (response.containsKey('error')) {
+        //         completer.completeError(
+        //           SyncServiceException(response['error'] as String),
+        //         );
+        //       } else {
+        //         completer.complete(response);
+        //       }
+        //     } catch (e) {
+        //       completer.completeError(
+        //         SyncServiceException(
+        //           'Invalid response format: ${e.toString()}',
+        //         ),
+        //       );
+        //     }
+        //   }
+        // },
         cancelOnError: true,
       );
 

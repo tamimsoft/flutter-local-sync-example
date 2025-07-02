@@ -11,7 +11,7 @@ import '../../../core/services/sync/adapter/generic_sync_adapter.dart';
 @lazySingleton
 class MedicineSyncAdapter extends GenericSyncAdapter<MedicineModel> {
   @override
-  String get table => DbTable.medicine(isDefault: true).name;
+  DbTable get table => DbTable.medicines;
 
   @override
   MedicineModel fromJson(Map<String, dynamic> json) =>
@@ -24,5 +24,5 @@ class MedicineSyncAdapter extends GenericSyncAdapter<MedicineModel> {
   String getId(MedicineModel model) => model.id;
 
   @override
-  DateTime getUpdatedAt(MedicineModel model) => model.lastUpdated;
+  DateTime getUpdatedAt(MedicineModel model) => model.updatedAt;
 }

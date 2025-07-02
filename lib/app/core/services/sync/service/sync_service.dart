@@ -49,6 +49,14 @@ class SyncService {
     await _client.push(table, data);
   }
 
+  /// Pull one item from the server.
+  Future<Map<String, dynamic>> pullOne({
+    required table,
+    required String id,
+  }) async {
+    return await _client.pullOne(table: table, id: id);
+  }
+
   /// Pulls data from the server.
   Future<List<Map<String, dynamic>>> pull({required String table}) async {
     return await _client.pull(table);

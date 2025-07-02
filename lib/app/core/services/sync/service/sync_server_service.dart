@@ -51,7 +51,11 @@ class SyncServerService {
             } else if (type == 'PULL') {
               final data = await _readAllFromFile(table);
               client.write(jsonEncode({'data': data}));
-            } else if (type == 'DELETE') {
+            } else if (type == 'PULL_ONE') {
+              final id = decoded['id'];
+              final item = await _readOneFromFile(table, id);
+              client.write(jsonEncode({'data': item}));
+            }else if (type == 'DELETE') {
               await _deleteFromFile(table, decoded['id']);
               client.write(jsonEncode({'status': 'deleted'}));
             }
@@ -90,9 +94,9 @@ class SyncServerService {
     if (existingIndex != -1) {
       final existing = items[existingIndex];
       final existingTime =
-          DateTime.tryParse(existing['lastUpdated'] ?? '') ?? DateTime(2000);
+          DateTime.tryParse(existing['updatedAt'] ?? '') ?? DateTime(2000);
       final newTime =
-          DateTime.tryParse(data['lastUpdated'] ?? '') ?? DateTime.now();
+          DateTime.tryParse(data['updatedAt'] ?? '') ?? DateTime.now();
 
       debugPrint('⏰ Comparing: new=$newTime, existing=$existingTime');
 
@@ -109,6 +113,19 @@ class SyncServerService {
 
     await file.writeAsString(jsonEncode(items));
     debugPrint('📁 File saved: ${file.path}');
+  }
+  /// Reads a single item with the specified [id] from the given [table] file.
+  Future<Map<String, dynamic>?> _readOneFromFile(String table, String id) async {
+    final file = await _getTableFile(table);
+    if (!await file.exists()) return null;
+
+    final content = await file.readAsString();
+    if (content.isEmpty) return null;
+
+    final List<Map<String, dynamic>> items =
+    List<Map<String, dynamic>>.from(jsonDecode(content));
+
+    return items.firstWhere((item) => item['id'] == id, orElse: () => {});
   }
 
   /// Reads all data from the specified [table] file.

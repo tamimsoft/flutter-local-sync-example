@@ -61,24 +61,26 @@ class MedicinePage extends StatelessWidget {
         builder: (context, state) {
           double total = state.medicines.fold(
             0,
-            (sum, m) => sum + (m.quentity * m.pp),
+                (sum, m) => sum + (m.quantity * m.pp),
           );
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return Column(
             children: [
               Expanded(
-                child: BlocBuilder<MedicineCubit, MedicineState>(
-                  builder: (context, state) {
-                    if (state.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return ListView.builder(
-                      itemCount: state.medicines.length,
-                      itemBuilder: (context, index) {
-                        final m = state.medicines[index];
-                        return MedicineCard(m: m);
-                      },
-                    );
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await context.read<MedicineCubit>().refresh();
                   },
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: state.medicines.length,
+                    itemBuilder: (context, index) {
+                      final m = state.medicines[index];
+                      return MedicineCard(m: m);
+                    },
+                  ),
                 ),
               ),
               Container(

@@ -18,7 +18,7 @@ class MedicineModel with _$MedicineModel {
     @HiveField(1) required String name,
 
     /// Quantity available in stock
-    @HiveField(2) required int quentity,
+    @HiveField(2) required int quantity,
 
     /// Packaging information (e.g., "Pcs, Packs, Box")
     @HiveField(3) required String packaging,
@@ -33,7 +33,7 @@ class MedicineModel with _$MedicineModel {
     @HiveField(6) required String? imagePath,
 
     /// Timestamp indicating when the medicine info was last updated
-    @HiveField(7) required DateTime lastUpdated,
+    @HiveField(7) required DateTime updatedAt,
   }) = _MedicineModel;
 
   /// Converts a JSON map to a [MedicineModel] instance.
