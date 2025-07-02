@@ -18,7 +18,7 @@ class Routes {
     late Widget widget;
 
     switch (settings.name) {
-      case RouteName.review:
+      case RouteName.home:
         widget = MedicinePage();
         break;
       default:

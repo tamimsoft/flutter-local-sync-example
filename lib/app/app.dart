@@ -31,8 +31,8 @@ class App extends StatelessWidget {
       /// Generates routes dynamically using the [Routes] class.
       onGenerateRoute: Routes.generateRoutes,
 
-      /// Sets the initial route to the review page.
-      initialRoute: RouteName.review,
+      /// Sets the initial route to the home page.
+      initialRoute: RouteName.home,
     );
   }
 }
