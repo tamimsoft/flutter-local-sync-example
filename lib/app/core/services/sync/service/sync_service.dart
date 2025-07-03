@@ -10,10 +10,16 @@ import 'sync_server_service.dart';
 /// It attempts to connect to an existing server; if none is found, it starts a new server.
 @lazySingleton
 class SyncService {
-  final _client = SyncClientService(
-    port: 50505,
-    address: InternetAddress.anyIPv4,
+  final InternetAddress _serverAddress = Platform.isAndroid
+      ? InternetAddress.anyIPv4
+      : InternetAddress.loopbackIPv4;
+  final int _defaultPort = 50505;
+
+  late final _client = SyncClientService(
+    address: _serverAddress,
+    port: _defaultPort,
   );
+
   final _server = SyncServerService();
   final ConnectivityHelper _connectivityHelper;
 
@@ -26,18 +32,18 @@ class SyncService {
 
   /// Initializes the sync service by attempting to connect to a server on [port].
   /// If no server is found, it starts a new server instance.
-  Future<void> init({int port = 50505}) async {
+  Future<void> init() async {
     try {
-      final socket = await Socket.connect(
-        InternetAddress.anyIPv4,
-        port,
+      final Socket socket = await Socket.connect(
+        _serverAddress,
+        _defaultPort,
         timeout: Duration(milliseconds: 800),
       );
       socket.destroy(); // Server exists
       debugPrint('🧑‍💻 Acting as client');
     } catch (_) {
       debugPrint('🛠 No server found. Acting as server');
-      await _server.startServer(address: InternetAddress.anyIPv4, port: port);
+      await _server.startServer(address: _serverAddress, port: _defaultPort);
     }
   }
 

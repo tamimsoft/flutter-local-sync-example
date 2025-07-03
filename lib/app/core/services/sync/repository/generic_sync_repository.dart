@@ -61,32 +61,9 @@ class GenericSyncRepository<T> {
     }
   }
 
-  /// Synchronizes remote data with local storage, pulling updates from the server.
-  // Future<void> sync(GenericSyncAdapter<T> adapter) async {
-  //   if (!await _syncService.hasConnection()) return;
-  //   _syncStatusCubit.setSyncing();
-  //   await _syncService.init();
-  //
-  //   final List<Map<String, dynamic>> list = await _syncService.pull(
-  //     table: adapter.table.name,
-  //   );
-  //   for (final item in list) {
-  //     final T remote = adapter.fromJson(item);
-  //     final T? local = await _db.findById<T>(
-  //       table: adapter.table,
-  //       id: adapter.getId(remote),
-  //     );
-  //     if (local == null ||
-  //         adapter.getUpdatedAt(remote).isAfter(adapter.getUpdatedAt(local))) {
-  //       await _db.upsert<T>(
-  //         table: adapter.table,
-  //         id: adapter.getId(remote),
-  //         data: remote,
-  //       );
-  //     }
-  //   }
-  //   _syncStatusCubit.setSynced();
-  // }
+  /// Synchronizes local data with remote service:
+  /// 1. Pushes local changes made while offline.
+  /// 2. Pulls the latest data from the remote service.
   Future<void> sync(GenericSyncAdapter<T> adapter) async {
     if (!await _syncService.hasConnection()) return;
 

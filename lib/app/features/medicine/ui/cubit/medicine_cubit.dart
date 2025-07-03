@@ -7,7 +7,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 import '/app/core/services/sync/service/sync_manager_service.dart';
-import '/app/core/utils/shared_file_util.dart';
+import '/app/core/utils/sync_storage_manager.dart';
 import '/app/core/utils/image_picker_utils.dart';
 import '/app/features/medicine/data/model/medicine_model.dart';
 import '/app/features/medicine/data/repository/medicine_repository.dart';
@@ -256,7 +256,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   ///
   /// Returns path to saved image or null if failed.
   Future<String?> _saveImageToLocal(File imageFile) async {
-    final dir = await SyncStorageManager.getSharedDirectory();
+    final dir = await SyncStorageManager.getSyncDirectory();
     final fileName = DateTime.now().millisecondsSinceEpoch.toString();
     final path = '${dir.path}/$fileName.png';
     final newImage = await imageFile.copy(path);
@@ -271,7 +271,7 @@ class MedicineCubit extends Cubit<MedicineState> {
       final byteData = await rootBundle.load(
         assetPath,
       ); // Load bytes from asset
-      final dir = await SyncStorageManager.getSharedDirectory();
+      final dir = await SyncStorageManager.getSyncDirectory();
       final fileName = DateTime.now().millisecondsSinceEpoch.toString();
       final path = '${dir.path}/$fileName.png';
 

@@ -6,7 +6,7 @@ import 'package:injectable/injectable.dart';
 import '/app/core/services/database/app_db.dart';
 import '/app/core/services/sync/ui/cubit/sync_status_cubit.dart';
 import '/app/core/utils/connectivity_helper.dart';
-import '/app/core/utils/shared_file_util.dart';
+import '/app/core/utils/sync_storage_manager.dart';
 import 'package:watcher/watcher.dart';
 
 @singleton
@@ -118,7 +118,7 @@ class SyncManagerService {
 
   /// Gets the JSON file associated with a table
   Future<File> _getTableFile(DbTable table) async {
-    final dir = await SyncStorageManager.getSharedDirectory();
+    final dir = await SyncStorageManager.getSyncDirectory();
     return File('${dir.path}/${table.name}.json');
   }
 

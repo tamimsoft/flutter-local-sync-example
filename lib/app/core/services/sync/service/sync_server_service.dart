@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '/app/core/utils/shared_file_util.dart';
+import '/app/core/utils/sync_storage_manager.dart';
 import '/app/core/exception/sync_service_exception.dart';
 
 /// A service class that manages a sync server to handle client requests for data operations.
@@ -55,7 +55,7 @@ class SyncServerService {
               final id = decoded['id'];
               final item = await _readOneFromFile(table, id);
               client.write(jsonEncode({'data': item}));
-            }else if (type == 'DELETE') {
+            } else if (type == 'DELETE') {
               await _deleteFromFile(table, decoded['id']);
               client.write(jsonEncode({'status': 'deleted'}));
             }
@@ -114,16 +114,21 @@ class SyncServerService {
     await file.writeAsString(jsonEncode(items));
     debugPrint('📁 File saved: ${file.path}');
   }
+
   /// Reads a single item with the specified [id] from the given [table] file.
-  Future<Map<String, dynamic>?> _readOneFromFile(String table, String id) async {
+  Future<Map<String, dynamic>?> _readOneFromFile(
+    String table,
+    String id,
+  ) async {
     final file = await _getTableFile(table);
     if (!await file.exists()) return null;
 
     final content = await file.readAsString();
     if (content.isEmpty) return null;
 
-    final List<Map<String, dynamic>> items =
-    List<Map<String, dynamic>>.from(jsonDecode(content));
+    final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(
+      jsonDecode(content),
+    );
 
     return items.firstWhere((item) => item['id'] == id, orElse: () => {});
   }
@@ -139,7 +144,7 @@ class SyncServerService {
 
   /// Returns the file path for the given [table].
   Future<File> _getTableFile(String table) async {
-    final dir = await SyncStorageManager.getSharedDirectory(); // base folder
+    final dir = await SyncStorageManager.getSyncDirectory(); // base folder
     return File('${dir.path}/$table.json');
   }
 
