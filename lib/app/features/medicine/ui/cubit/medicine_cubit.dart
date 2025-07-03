@@ -107,7 +107,8 @@ class MedicineCubit extends Cubit<MedicineState> {
   Future<void> refresh() async {
     emit(state.copyWith(isLoading: true));
     try {
-      await Future.delayed(const Duration(seconds: 2)); // Simulate delay
+      await _repo.sync();
+      //await Future.delayed(const Duration(seconds: 1)); // Simulate delay
       _templateMedicines = await _repo.getAll();
       emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
     } catch (e) {

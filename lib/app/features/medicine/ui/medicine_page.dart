@@ -19,15 +19,15 @@ import 'widget/medicine_card.dart';
 /// - Save button to persist all medicine data.
 
 class MedicinePage extends StatelessWidget {
-  const MedicinePage({super.key});
+  MedicinePage({super.key});
 
+  final cubit = getIt<MedicineCubit>();
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider<MedicineCubit>(
           create: (_) {
-            final cubit = getIt<MedicineCubit>();
             cubit.init();
             return cubit;
           },
@@ -36,7 +36,7 @@ class MedicinePage extends StatelessWidget {
       ],
       child: BlocListener<SyncStatusCubit, SyncStatusState>(
         listener: (context, state) {
-          if (state.status == SyncStatus.synced) {
+          if (state.status == SyncStatus.syncing) {
             context.read<MedicineCubit>().refresh();
           }
         },
@@ -51,6 +51,21 @@ class MedicinePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(AppStrings.appName),
         actions: [
+          // if platform is not android, show sync button
+          BlocBuilder<SyncStatusCubit, SyncStatusState>(
+            builder: (context, state) {
+              if (Theme.of(context).platform != TargetPlatform.android &&
+                  state.status == SyncStatus.synced) {
+                return IconButton(
+                  icon: const Icon(Icons.sync),
+                  onPressed: () async {
+                    await cubit.refresh();
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: SyncBanner(),
@@ -61,7 +76,7 @@ class MedicinePage extends StatelessWidget {
         builder: (context, state) {
           double total = state.medicines.fold(
             0,
-                (sum, m) => sum + (m.quantity * m.pp),
+            (sum, m) => sum + (m.quantity * m.pp),
           );
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -88,7 +103,10 @@ class MedicinePage extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.blue,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                 ),
                 child: Column(
                   children: [
