@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
-import '/app/core/services/sync/service/sync_manager_service.dart';
+import '../../../../core/services/sync/service/sync_watcher_service.dart';
 import '/app/core/utils/sync_storage_manager.dart';
 import '/app/core/utils/image_picker_utils.dart';
 import '/app/features/medicine/data/model/medicine_model.dart';
@@ -29,7 +29,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   final MedicineRepository _repo;
   final MedicineService _service;
   final ImagePickerUtils _imagePicker;
-  final SyncManagerService _syncManager;
+  final SyncWatcherService _syncManager;
 
   List<MedicineModel> _templateMedicines = [];
 

@@ -179,28 +179,6 @@ class SyncClientService {
             }
           }
         },
-
-        // onDone: () {
-        //   if (!completer.isCompleted) {
-        //     try {
-        //       final response =
-        //           jsonDecode(buffer.toString()) as Map<String, dynamic>;
-        //       if (response.containsKey('error')) {
-        //         completer.completeError(
-        //           SyncServiceException(response['error'] as String),
-        //         );
-        //       } else {
-        //         completer.complete(response);
-        //       }
-        //     } catch (e) {
-        //       completer.completeError(
-        //         SyncServiceException(
-        //           'Invalid response format: ${e.toString()}',
-        //         ),
-        //       );
-        //     }
-        //   }
-        // },
         cancelOnError: true,
       );
 

@@ -102,8 +102,7 @@ class SubTotalMrpAndPp extends StatelessWidget {
           SizedBox(
             width: 80,
             child: TextFormField(
-              controller: TextEditingController(text: value),
-              // initialValue: initialValue,
+              initialValue: value,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),

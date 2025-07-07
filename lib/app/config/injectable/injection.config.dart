@@ -15,7 +15,7 @@ import 'package:instance_a/app/core/services/database/local/hive_db_impl.dart'
     as _i107;
 import 'package:instance_a/app/core/services/sync/repository/generic_sync_repository.dart'
     as _i603;
-import 'package:instance_a/app/core/services/sync/service/sync_manager_service.dart'
+import 'package:instance_a/app/core/services/sync/service/sync_watcher_service.dart'
     as _i737;
 import 'package:instance_a/app/core/services/sync/service/sync_service.dart'
     as _i753;
@@ -38,36 +38,40 @@ _i174.GetIt $init(
   String? environment,
   _i526.EnvironmentFilter? environmentFilter,
 }) {
-  final gh = _i526.GetItHelper(
-    getIt,
-    environment,
-    environmentFilter,
-  );
+  final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   gh.factory<_i877.MedicineService>(() => _i877.MedicineService());
   gh.singleton<_i1010.ConnectivityHelper>(() => _i1010.ConnectivityHelper());
   gh.lazySingleton<_i890.ImagePickerUtils>(() => _i890.ImagePickerUtils());
   gh.lazySingleton<_i640.SyncStatusCubit>(() => _i640.SyncStatusCubit());
   gh.lazySingleton<_i857.MedicineSyncAdapter>(
-      () => _i857.MedicineSyncAdapter());
-  gh.singleton<_i737.SyncManagerService>(() => _i737.SyncManagerService(
-        gh<_i1010.ConnectivityHelper>(),
-        gh<_i640.SyncStatusCubit>(),
-      ));
+    () => _i857.MedicineSyncAdapter(),
+  );
+  gh.singleton<_i737.SyncWatcherService>(
+    () => _i737.SyncWatcherService(
+      gh<_i1010.ConnectivityHelper>(),
+      gh<_i640.SyncStatusCubit>(),
+    ),
+  );
   gh.lazySingleton<_i168.AppDb>(() => _i107.HiveDbImpl());
   gh.lazySingleton<_i753.SyncService>(
-      () => _i753.SyncService(gh<_i1010.ConnectivityHelper>()));
+    () => _i753.SyncService(gh<_i1010.ConnectivityHelper>()),
+  );
   gh.lazySingleton<_i78.MedicineRepository>(
-      () => _i78.MedicineRepository(gh<_i857.MedicineSyncAdapter>()));
+    () => _i78.MedicineRepository(gh<_i857.MedicineSyncAdapter>()),
+  );
   gh.lazySingleton<_i603.GenericSyncRepository<dynamic>>(
-      () => _i603.GenericSyncRepository<dynamic>(
-            gh<_i168.AppDb>(),
-            gh<_i753.SyncService>(),
-          ));
-  gh.factory<_i749.MedicineCubit>(() => _i749.MedicineCubit(
-        gh<_i78.MedicineRepository>(),
-        gh<_i877.MedicineService>(),
-        gh<_i890.ImagePickerUtils>(),
-        gh<_i737.SyncManagerService>(),
-      ));
+    () => _i603.GenericSyncRepository<dynamic>(
+      gh<_i168.AppDb>(),
+      gh<_i753.SyncService>(),
+    ),
+  );
+  gh.factory<_i749.MedicineCubit>(
+    () => _i749.MedicineCubit(
+      gh<_i78.MedicineRepository>(),
+      gh<_i877.MedicineService>(),
+      gh<_i890.ImagePickerUtils>(),
+      gh<_i737.SyncWatcherService>(),
+    ),
+  );
   return getIt;
 }

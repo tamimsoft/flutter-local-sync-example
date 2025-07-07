@@ -10,7 +10,7 @@ import '/app/core/utils/sync_storage_manager.dart';
 import 'package:watcher/watcher.dart';
 
 @singleton
-class SyncManagerService {
+class SyncWatcherService {
   final ConnectivityHelper _connectivityHelper;
   final SyncStatusCubit _syncStatusCubit;
 
@@ -26,7 +26,7 @@ class SyncManagerService {
   /// Sync trigger callback injected during init
   late final Future<void> Function(DbTable table) _onChange;
 
-  SyncManagerService(this._connectivityHelper, this._syncStatusCubit);
+  SyncWatcherService(this._connectivityHelper, this._syncStatusCubit);
 
   /// Initializes the sync manager with sync logic
   void init({required Future<void> Function(DbTable table) onChange}) {
