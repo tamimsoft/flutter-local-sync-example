@@ -67,11 +67,11 @@ import 'package:flutter/foundation.dart';
 // }
 class SyncService {
   final InternetAddress _serverAddress = Platform.isAndroid
-      ? InternetAddress.anyIPv4
+      ? InternetAddress.loopbackIPv4
       : InternetAddress.loopbackIPv4;
   final int _defaultPort = 50505;
 
-  late final SyncClientService _client;
+  SyncClientService? _client;
   final SyncServerService _server = SyncServerService();
   final ConnectivityHelper _connectivityHelper;
 
@@ -79,21 +79,30 @@ class SyncService {
 
   /// Initializes WebSocket-based sync.
   Future<void> init() async {
+    debugPrint(_serverAddress.toString());
     final serverRunning = await _isServerRunning();
+
     if (!serverRunning) {
       try {
         await _server.startServer(address: _serverAddress, port: _defaultPort);
         debugPrint('🟢 Started WebSocket server');
-        _client = SyncClientService(
-          address: _serverAddress,
-          port: _defaultPort,
-        );
-        await _client.connect();
-        debugPrint('🔗 Connected as WebSocket client');
       } catch (e) {
         debugPrint('❌ Failed to start server: $e');
       }
     }
+
+    // ✅ Always initialize client regardless of server status
+    final client = await getClient();
+    await client.connect();
+    debugPrint('🔗 Connected as WebSocket client');
+  }
+
+  Future<SyncClientService> getClient() async {
+    if (_client == null) {
+      _client = SyncClientService(address: _serverAddress, port: _defaultPort);
+      await _client!.connect();
+    }
+    return _client!;
   }
 
   // /// Checks if the server is running by attempting to connect to it.
@@ -119,12 +128,14 @@ class SyncService {
     required String table,
     required Map<String, dynamic> data,
   }) async {
-    await _client.push(table, data);
+    final client = await getClient();
+    await client.push(table, data);
   }
 
   /// Pulls all items from the server.
   Future<List<Map<String, dynamic>>> pull({required String table}) async {
-    return await _client.pull(table);
+    final client = await getClient();
+    return await client.pull(table);
   }
 
   /// Pulls one item from the server.
@@ -132,20 +143,25 @@ class SyncService {
     required String table,
     required String id,
   }) async {
-    return await _client.pullOne(table: table, id: id);
+    final client = await getClient();
+    return await client.pullOne(table: table, id: id);
   }
 
   /// Deletes an item from the server.
   Future<void> delete({required String table, required String id}) async {
-    await _client.delete(table, id);
+    final client = await getClient();
+    await client.delete(table, id);
   }
 
   /// Real-time messages from the server (e.g., 'updated' events).
-  Stream<Map<String, dynamic>> get messages => _client.messages;
+  Future<Stream<Map<String, dynamic>>> get messages async {
+    final client = await getClient();
+    return client.messages;
+  }
 
   /// Closes connections and cleans up.
   void dispose() {
-    _client.dispose();
+    _client?.dispose();
     _server.stopServer();
   }
 }

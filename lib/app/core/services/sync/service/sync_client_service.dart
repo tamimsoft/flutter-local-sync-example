@@ -207,7 +207,6 @@ class SyncClientService {
   final int port;
   WebSocket? _socket;
   SyncClientService({required this.address, required this.port});
-  // final _streamController = StreamController<Map<String, dynamic>>();
   final _streamController = StreamController<Map<String, dynamic>>.broadcast();
 
   Future<void> connect() async {

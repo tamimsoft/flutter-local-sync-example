@@ -8,27 +8,89 @@ import '../cubit/medicine_cubit.dart';
 /// A widget that displays and manages the subtotal, MRP (Maximum Retail Price), and PP (Purchase Price)
 /// for a specific medicine item. It allows users to edit MRP and PP values and dynamically updates
 /// the subtotal based on quantity and PP.
-class SubTotalMrpAndPp extends StatelessWidget {
-  const SubTotalMrpAndPp({super.key, required this.m});
 
+class SubTotalMrpAndPp extends StatefulWidget {
+  const SubTotalMrpAndPp({super.key, required this.m});
   final MedicineModel m;
 
   @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<MedicineCubit>();
+  State<SubTotalMrpAndPp> createState() => _SubTotalMrpAndPpState();
+}
 
+class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
+  late final TextEditingController _mrpController;
+  late final TextEditingController _ppController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final cubit = context.read<MedicineCubit>();
+    final initial = cubit.state.medicines.firstWhere(
+      (e) => e.id == widget.m.id,
+    );
+
+    _mrpController = TextEditingController(
+      text: initial.mrp.toStringAsFixed(2),
+    );
+    _ppController = TextEditingController(text: initial.pp.toStringAsFixed(2));
+
+    _mrpController.addListener(() {
+      final value = double.tryParse(_mrpController.text);
+      if (value != null) {
+        cubit.setMrp(widget.m.id, value);
+      }
+    });
+
+    _ppController.addListener(() {
+      final value = double.tryParse(_ppController.text);
+      if (value != null) {
+        cubit.setPp(widget.m.id, value);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _mrpController.dispose();
+    _ppController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         BlocBuilder<MedicineCubit, MedicineState>(
           buildWhen: (prev, curr) {
-            final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
-            final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
+            final oldItem = prev.medicines.firstWhere(
+              (e) => e.id == widget.m.id,
+            );
+            final newItem = curr.medicines.firstWhere(
+              (e) => e.id == widget.m.id,
+            );
             return oldItem.pp != newItem.pp ||
+                oldItem.mrp != newItem.mrp ||
                 oldItem.quantity != newItem.quantity;
           },
           builder: (context, state) {
-            final updated = state.medicines.firstWhere((e) => e.id == m.id);
+            final updated = state.medicines.firstWhere(
+              (e) => e.id == widget.m.id,
+            );
+            // 🔁 Update controllers only if value is out of sync
+            final newMrp = updated.mrp.toStringAsFixed(2);
+            final newPp = updated.pp.toStringAsFixed(2);
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_mrpController.text != newMrp) {
+                _mrpController.text = newMrp;
+              }
+              if (_ppController.text != newPp) {
+                _ppController.text = newPp;
+              }
+            });
+
             final subTotal = updated.quantity * updated.pp;
             return Text(
               'Sub Total: ৳ ${subTotal.toStringAsFixed(2)}',
@@ -42,44 +104,10 @@ class SubTotalMrpAndPp extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Row(
-          children: <Widget>[
-            BlocBuilder<MedicineCubit, MedicineState>(
-              buildWhen: (prev, curr) {
-                final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
-                final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
-                return oldItem.mrp != newItem.mrp;
-              },
-              builder: (context, state) {
-                final updated = state.medicines.firstWhere((e) => e.id == m.id);
-                return _buildTextField(
-                  labelText: 'MRP ৳',
-                  value: updated.mrp.toStringAsFixed(2),
-                  onChanged: (value) {
-                    final parsed = double.tryParse(value);
-                    cubit.setMrp(updated.id, parsed ?? 0.0);
-                  },
-                );
-              },
-            ),
+          children: [
+            _buildTextField(labelText: 'MRP ৳', controller: _mrpController),
             const SizedBox(width: 20),
-            BlocBuilder<MedicineCubit, MedicineState>(
-              buildWhen: (prev, curr) {
-                final oldItem = prev.medicines.firstWhere((e) => e.id == m.id);
-                final newItem = curr.medicines.firstWhere((e) => e.id == m.id);
-                return oldItem.pp != newItem.pp;
-              },
-              builder: (context, state) {
-                final updated = state.medicines.firstWhere((e) => e.id == m.id);
-                return _buildTextField(
-                  labelText: 'PP ৳',
-                  value: updated.pp.toStringAsFixed(2),
-                  onChanged: (value) {
-                    final parsed = double.tryParse(value);
-                    cubit.setPp(updated.id, parsed ?? 0.0);
-                  },
-                );
-              },
-            ),
+            _buildTextField(labelText: 'PP ৳', controller: _ppController),
           ],
         ),
       ],
@@ -88,8 +116,7 @@ class SubTotalMrpAndPp extends StatelessWidget {
 
   Widget _buildTextField({
     required String labelText,
-    required String value,
-    required ValueChanged<String> onChanged,
+    required TextEditingController controller,
   }) {
     return Expanded(
       child: Column(
@@ -102,7 +129,7 @@ class SubTotalMrpAndPp extends StatelessWidget {
           SizedBox(
             width: 80,
             child: TextFormField(
-              initialValue: value,
+              controller: controller,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -115,7 +142,6 @@ class SubTotalMrpAndPp extends StatelessWidget {
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              onChanged: onChanged,
             ),
           ),
         ],

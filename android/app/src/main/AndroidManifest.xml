@@ -19,7 +19,7 @@
 
     <application
             android:requestLegacyExternalStorage="true"
-            android:label="instance_a"
+            android:label="@string/appName"
             android:name="${applicationName}"
             android:icon="@mipmap/ic_launcher">
 
