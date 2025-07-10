@@ -7,7 +7,7 @@ import 'core/theme/app_theme.dart';
 /// The main entry point of the application.
 ///
 /// This widget sets up the core configuration for the app, including the title,
-/// theme, routing, and initial screen. It uses [MaterialApp] to provide a rich 
+/// theme, routing, and initial screen. It uses [MaterialApp] to provide a rich
 /// Material Design experience.
 class App extends StatelessWidget {
   /// Creates a new instance of the [App] widget.
@@ -31,8 +31,8 @@ class App extends StatelessWidget {
       /// Generates routes dynamically using the [Routes] class.
       onGenerateRoute: Routes.generateRoutes,
 
-      /// Sets the initial route to the home page.
-      initialRoute: RouteName.home,
+      /// Sets the initial route to the splash page.
+      initialRoute: RouteName.splash,
     );
   }
 }

@@ -10,7 +10,7 @@ class SyncStorageManager {
     Directory dir;
 
     if (Platform.isAndroid) {
-      final hasPermission = await _requestStoragePermission();
+      final hasPermission = await requestStoragePermission();
 
       if (!hasPermission) {
         throw FileSystemException("❌ Storage permission denied");
@@ -55,24 +55,29 @@ class SyncStorageManager {
   /// Handles both legacy storage permissions and scoped storage requirements for Android 11+.
   ///
   /// Returns `true` if permission is already granted or successfully requested; otherwise `false`.
-  static Future<bool> _requestStoragePermission() async {
+  static Future<bool> requestStoragePermission() async {
     if (!Platform.isAndroid) return true;
 
-    if (await Permission.storage.isGranted) {
+    // Already granted
+    if (await Permission.storage.isGranted ||
+        await Permission.manageExternalStorage.isGranted) {
       return true;
     }
 
-    // For Android 11+
-    if (await Permission.manageExternalStorage.isGranted) {
-      return true;
-    }
-
-    // Request both
+    // Request storage first (Android < 11)
     final storageStatus = await Permission.storage.request();
     if (storageStatus.isGranted) return true;
 
-    // For Android 11+, explicitly request manageExternalStorage
+    // Request manageExternalStorage (Android 11+)
     final manageStatus = await Permission.manageExternalStorage.request();
-    return manageStatus.isGranted;
+    if (manageStatus.isGranted) return true;
+
+    // Optional: Check if permission was permanently denied
+    if (storageStatus.isPermanentlyDenied || manageStatus.isPermanentlyDenied) {
+      // Open app settings if denied forever
+      await openAppSettings();
+    }
+
+    return false;
   }
 }

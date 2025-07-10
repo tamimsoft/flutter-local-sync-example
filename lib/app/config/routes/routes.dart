@@ -4,7 +4,7 @@ import 'routes_name.dart';
 import 'views.dart';
 
 /// This class handles the generation of dynamic routes in the application.
-/// It uses a private constructor to prevent instantiation and provides 
+/// It uses a private constructor to prevent instantiation and provides
 /// a static [generateRoutes] method that returns a [Route] based on the given [RouteSettings].
 class Routes {
   Routes._();
@@ -18,6 +18,12 @@ class Routes {
     late Widget widget;
 
     switch (settings.name) {
+      case RouteName.splash:
+        widget = StartupGate();
+        break;
+      case RouteName.permissionDenied:
+        widget = PermissionDeniedPage();
+        break;
       case RouteName.home:
         widget = MedicinePage();
         break;
