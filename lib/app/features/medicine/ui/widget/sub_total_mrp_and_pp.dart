@@ -21,6 +21,7 @@ class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
   late final TextEditingController _mrpController;
   late final TextEditingController _ppController;
 
+  MedicineCubit get _cubit => context.read<MedicineCubit>();
   @override
   void initState() {
     super.initState();
@@ -34,20 +35,6 @@ class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
       text: initial.mrp.toStringAsFixed(2),
     );
     _ppController = TextEditingController(text: initial.pp.toStringAsFixed(2));
-
-    _mrpController.addListener(() {
-      final value = double.tryParse(_mrpController.text);
-      if (value != null) {
-        cubit.setMrp(widget.m.id, value);
-      }
-    });
-
-    _ppController.addListener(() {
-      final value = double.tryParse(_ppController.text);
-      if (value != null) {
-        cubit.setPp(widget.m.id, value);
-      }
-    });
   }
 
   @override
@@ -105,9 +92,21 @@ class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
         const SizedBox(height: 8),
         Row(
           children: [
-            _buildTextField(labelText: 'MRP ৳', controller: _mrpController),
+            _buildTextField(
+              labelText: 'MRP ৳',
+              controller: _mrpController,
+              onTapOutside: (value) {
+                _cubit.setMrp(widget.m.id, value);
+              },
+            ),
             const SizedBox(width: 20),
-            _buildTextField(labelText: 'PP ৳', controller: _ppController),
+            _buildTextField(
+              labelText: 'PP ৳',
+              controller: _ppController,
+              onTapOutside: (value) {
+                _cubit.setPp(widget.m.id, value);
+              },
+            ),
           ],
         ),
       ],
@@ -117,6 +116,7 @@ class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
   Widget _buildTextField({
     required String labelText,
     required TextEditingController controller,
+    required Function onTapOutside,
   }) {
     return Expanded(
       child: Column(
@@ -130,6 +130,20 @@ class _SubTotalMrpAndPpState extends State<SubTotalMrpAndPp> {
             width: 80,
             child: TextFormField(
               controller: controller,
+              onTapOutside: (event) {
+                FocusScope.of(context).unfocus();
+                final value = double.tryParse(controller.text);
+                if (value != null) {
+                  onTapOutside.call(value);
+                }
+              },
+              onFieldSubmitted: (value) {
+                FocusScope.of(context).unfocus();
+                final parsedValue = double.tryParse(value);
+                if (parsedValue != null) {
+                  onTapOutside.call(parsedValue);
+                }
+              },
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),

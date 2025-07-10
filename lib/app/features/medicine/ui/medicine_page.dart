@@ -51,7 +51,6 @@ class MedicinePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(AppStrings.appName),
         actions: [
-          // if platform is not android, show sync button
           BlocBuilder<SyncStatusCubit, SyncStatusState>(
             builder: (context, state) {
               if (Theme.of(context).platform != TargetPlatform.android &&
@@ -66,22 +65,19 @@ class MedicinePage extends StatelessWidget {
               return const SizedBox.shrink();
             },
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: SyncBanner(),
-          ),
+          Padding(padding: EdgeInsets.only(right: 16.0), child: SyncBanner()),
         ],
       ),
       body: Column(
         children: [
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () async {
-                await context.read<MedicineCubit>().refresh();
-              },
+              onRefresh: () async => await cubit.refresh(),
               child: BlocBuilder<MedicineCubit, MedicineState>(
                 builder: (context, state) {
                   return ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: state.medicines.length,
                     itemBuilder: (context, index) {
@@ -93,52 +89,55 @@ class MedicinePage extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
+          BlocBuilder<MedicineCubit, MedicineState>(
+            builder: (context, state) {
+              return _buildTotalAndSaveSection(context, state);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalAndSaveSection(BuildContext context, MedicineState state) {
+    final total = state.medicines.fold(
+      0.0,
+      (sum, m) => sum + (m.quantity * m.pp),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            "Total: ${total.toStringAsFixed(2)}",
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            child: Column(
-              children: [
-                BlocBuilder<MedicineCubit, MedicineState>(
-                  builder: (context, state) {
-                    double total = state.medicines.fold(
-                      0,
-                      (sum, m) => sum + (m.quantity * m.pp),
-                    );
-                    return Text(
-                      "Total: ${total.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 10),
-                BlocListener<MedicineCubit, MedicineState>(
-                  listenWhen: (p, c) => p.errorMessage != c.errorMessage,
-                  listener: (context, state) {
-                    if (context.mounted && state.errorMessage != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.errorMessage!)),
-                      );
-                    }
-                  },
-                  child: ElevatedButton(
-                    onPressed: () {
-                      cubit.saveAll();
-                    },
-                    child: const Text('Save'),
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(height: 10),
+          BlocListener<MedicineCubit, MedicineState>(
+            listenWhen: (p, c) => p.errorMessage != c.errorMessage,
+            listener: (context, state) {
+              if (context.mounted && state.errorMessage != null) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+              }
+            },
+            child: ElevatedButton(
+              onPressed: () => context.read<MedicineCubit>().saveAll(),
+              child: const Text('Save'),
             ),
           ),
         ],
