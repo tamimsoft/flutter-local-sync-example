@@ -29,7 +29,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   final MedicineRepository _repo;
   final MedicineService _service;
   final ImagePickerUtils _imagePicker;
-  final SyncWatcherService _syncManager;
+  final SyncWatcherService _syncWatcher;
 
   List<MedicineModel> _templateMedicines = [];
 
@@ -39,7 +39,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// - [_service]: Service providing utility functions like dummy data generation.
   /// - [_imagePicker]: Utility to pick images from device gallery.
   /// - [_watcher]: Watches database changes and triggers updates.
-  MedicineCubit(this._repo, this._service, this._imagePicker, this._syncManager)
+  MedicineCubit(this._repo, this._service, this._imagePicker, this._syncWatcher)
     : super(MedicineState());
 
   /// Initializes medicine data on app start.
@@ -76,8 +76,8 @@ class MedicineCubit extends Cubit<MedicineState> {
       } else {
         emit(state.copyWith(medicines: _templateMedicines, isLoading: false));
       }
-      _syncManager.init(onChange: _onFileChanged);
-      _syncManager.startWatching(DbTable.medicines);
+      _syncWatcher.init(onChange: _onFileChanged);
+      _syncWatcher.startWatching(DbTable.medicines);
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
@@ -141,6 +141,17 @@ class MedicineCubit extends Cubit<MedicineState> {
   Future<void> saveAll() async {
     emit(state.copyWith(isLoading: false, errorMessage: null));
     try {
+      // Check if the current medicines in state match the template medicines
+      // If they do, no need to save again
+      final eq = const DeepCollectionEquality();
+      if (eq.equals(state.medicines, _templateMedicines)) {
+        emit(
+          state.copyWith(isLoading: false, errorMessage: 'No changes to save'),
+        );
+        debugPrint('✅ No changes to save');
+        return;
+      }
+
       final List<MedicineModel> updatedMedicines = [];
 
       for (var medicine in state.medicines) {
@@ -158,6 +169,14 @@ class MedicineCubit extends Cubit<MedicineState> {
 
       await _repo.saveAll(updatedMedicines);
       _templateMedicines = updatedMedicines;
+      emit(
+        state.copyWith(
+          medicines: updatedMedicines,
+          isLoading: false,
+          errorMessage: 'Medicines saved successfully',
+        ),
+      );
+      debugPrint('✅ Medicines saved successfully');
     } catch (e) {
       emit(state.copyWith(errorMessage: e.toString()));
     } finally {
@@ -288,7 +307,7 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Stops watching database before closing the cubit.
   @override
   Future<void> close() {
-    _syncManager.startWatching(DbTable.medicines);
+    _syncWatcher.startWatching(DbTable.medicines);
     return super.close();
   }
 }

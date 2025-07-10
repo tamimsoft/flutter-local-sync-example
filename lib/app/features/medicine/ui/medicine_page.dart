@@ -72,68 +72,76 @@ class MedicinePage extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<MedicineCubit, MedicineState>(
-        builder: (context, state) {
-          double total = state.medicines.fold(
-            0,
-            (sum, m) => sum + (m.quantity * m.pp),
-          );
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Column(
-            children: [
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    await context.read<MedicineCubit>().refresh();
-                  },
-                  child: ListView.builder(
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await context.read<MedicineCubit>().refresh();
+              },
+              child: BlocBuilder<MedicineCubit, MedicineState>(
+                builder: (context, state) {
+                  return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: state.medicines.length,
                     itemBuilder: (context, index) {
                       final m = state.medicines[index];
                       return MedicineCard(m: m);
                     },
-                  ),
-                ),
+                  );
+                },
               ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Column(
+              children: [
+                BlocBuilder<MedicineCubit, MedicineState>(
+                  builder: (context, state) {
+                    double total = state.medicines.fold(
+                      0,
+                      (sum, m) => sum + (m.quantity * m.pp),
+                    );
+                    return Text(
                       "Total: ${total.toStringAsFixed(2)}",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<MedicineCubit>().saveAll();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Data saved')),
-                        );
-                      },
-                      child: const Text('Save'),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              ),
-            ],
-          );
-        },
+                SizedBox(height: 10),
+                BlocListener<MedicineCubit, MedicineState>(
+                  listenWhen: (p, c) => p.errorMessage != c.errorMessage,
+                  listener: (context, state) {
+                    if (context.mounted && state.errorMessage != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.errorMessage!)),
+                      );
+                    }
+                  },
+                  child: ElevatedButton(
+                    onPressed: () {
+                      cubit.saveAll();
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
